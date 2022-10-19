@@ -2,6 +2,7 @@
 
 import requests
 import pandas as pd
+import numpy as np
 from bs4 import BeautifulSoup
 from tabulate import tabulate
 import sqlite3
@@ -46,10 +47,6 @@ def get_data(code):
     # create beautifulsoup object
     soup = BeautifulSoup(site_html, 'html.parser')
 
-    # print('classes of each table')
-    # for table in soup.find_all('table'):
-    #     print(table.get('class'))
-
     wage_table = soup.find('table', class_ = 'sortable_datatable')
 
     # define dataframe for wage data
@@ -68,7 +65,6 @@ def get_data(code):
     ])
 
     # process the data and place into the dataframe
-    # TODO: need to figure out what to do if data is instead a link to about stuff
     for row in wage_table.tbody.find_all('tr'):
         column_data = row.find_all('td')
 
@@ -77,14 +73,14 @@ def get_data(code):
         level = column_data[2].text
 
         # only these have possibility of matching the regex
-        employment = None if re.match(number_code_regex, column_data[3].text) else process_employment(column_data[3].text)
-        employment_rse = column_data[4].text if re.match(number_code_regex, column_data[4].text) else process_employment_rse(column_data[4].text)
-        employment_per_1000 = column_data[5].text if re.match(number_code_regex, column_data[5].text) else process_employment_per_1000(column_data[5].text)
-        location_quotient = column_data[6].text if re.match(number_code_regex, column_data[6].text) else process_location_quotient(column_data[6].text)
-        median_hourly_wage = column_data[7].text if re.match(number_code_regex, column_data[7].text) else process_median_hourly_wage(column_data[7].text)
-        mean_hourly_wage = column_data[8].text if re.match(number_code_regex, column_data[8].text) else process_mean_hourly_wage(column_data[8].text)
-        annual_mean_wage = column_data[9].text if re.match(number_code_regex, column_data[9].text) else process_annual_mean_wage(column_data[9].text)
-        mean_wage_rse = column_data[10].text if re.match(number_code_regex, column_data[10].text) else process_mean_wage_rse(column_data[10].text)
+        employment = np.nan if re.match(number_code_regex, column_data[3].text) else process_employment(column_data[3].text)
+        employment_rse = np.nan if re.match(number_code_regex, column_data[4].text) else process_employment_rse(column_data[4].text)
+        employment_per_1000 = np.nan if re.match(number_code_regex, column_data[5].text) else process_employment_per_1000(column_data[5].text)
+        location_quotient = np.nan if re.match(number_code_regex, column_data[6].text) else process_location_quotient(column_data[6].text)
+        median_hourly_wage = np.nan if re.match(number_code_regex, column_data[7].text) else process_median_hourly_wage(column_data[7].text)
+        mean_hourly_wage = np.nan if re.match(number_code_regex, column_data[8].text) else process_mean_hourly_wage(column_data[8].text)
+        annual_mean_wage = np.nan if re.match(number_code_regex, column_data[9].text) else process_annual_mean_wage(column_data[9].text)
+        mean_wage_rse = np.nan if re.match(number_code_regex, column_data[10].text) else process_mean_wage_rse(column_data[10].text)
 
         wage_df = wage_df.append({
             'occupation_code': occupation_code,
@@ -100,13 +96,8 @@ def get_data(code):
             'mean_wage_rse_percent': mean_wage_rse,
         }, ignore_index=True)
 
-        # print(column_data[0].text)
-        # break
-
-    # print(wage_table)
-    # print(tabulate(wage_df, headers='keys', tablefmt='psql'))
+    # wage_df.to_csv('wage_data.csv', index=False)
 
 
 if __name__ == "__main__":
-    # get_data(seattle_code)
-    print(type(process_employment_rse("14.2%")))
+    get_data(seattle_code)
