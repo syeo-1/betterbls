@@ -21,11 +21,12 @@ db = SQLAlchemy(app)
 #         return f'<Task {self.id}>'
 
 class WageData(db.Model):
-    __tablename__ = 'county_42660'
+    __tablename__ = 'county_wage_data'
 
     occupation_code = db.Column(db.String(20), nullable=False, primary_key=True)
     occupation_title = db.Column(db.String(20), nullable=False)
     level = db.Column(db.String(20), nullable=False)
+    county_code = db.Column(db.String(20))
     employment = db.Column(db.Integer)
     employment_rse_percent = db.Column(db.Float)
     employment_per_1000_jobs = db.Column(db.Float)
@@ -38,29 +39,38 @@ class WageData(db.Model):
     def __repr__(self) -> str:
         return f'<Task {self.occupation_code}>'
 
-@app.route('/data', methods=['GET'])
-def data():
+@app.route('/data/<county_code>', methods=['GET'])
+def data(county_code):
     if request.method == 'GET':
-        # queries a list of WageData objects
-        # where each WageData object represents a row from
-        # a specified county wage data table
-        wage_data_list = WageData.query.order_by(WageData.annual_mean_wage_usd).all()
 
-        json_list = []
-        useless_key = '_sa_instance_state'
-        for wage_data_class_instance in wage_data_list:
-            wage_data_dict = wage_data_class_instance.__dict__
+        try:
+            # generate the class for the table
+            # db_class = type(f'county_{county_code}', (WageDataBaseClass, db.Model), {'__tablename__': f'county_{county_code}'})
 
-            # get rid of key just representing db connection information
-            # which isn't useful for displayed data
-            wage_data_dict.pop(useless_key, None)
+            # queries a list of WageData objects
+            # where each WageData object represents a row from
+            # a specified county wage data table
+            # filter it by county_code that's passed in the url
+            wage_data_list = WageData.query.filter(WageData.county_code == county_code)
 
-            # add the data to the list after removing key
-            json_list.append(wage_data_dict)
+            json_list = []
+            useless_key = '_sa_instance_state'
+            for wage_data_class_instance in wage_data_list:
+                wage_data_dict = wage_data_class_instance.__dict__
 
-        # convert the list to a json object and return
-        # (cannot return as a raw list!!!)
-        return json.dumps(json_list)
+                # get rid of key just representing db connection information
+                # which isn't useful for displayed data
+                wage_data_dict.pop(useless_key, None)
+
+                # add the data to the list after removing key
+                json_list.append(wage_data_dict)
+
+            # convert the list to a json object and return
+            # (cannot return as a raw list!!!)
+            return json.dumps(json_list)
+        except Exception as e:
+            print(str(e))
+            return "The given countycode does not exist!"
 
 
 if __name__ == "__main__":

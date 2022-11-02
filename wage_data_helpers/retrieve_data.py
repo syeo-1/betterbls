@@ -95,6 +95,7 @@ def get_data(code):
         mean_wage_rse = np.nan if re.match(number_code_regex, column_data[10].text) else process_mean_wage_rse(column_data[10].text)
 
         wage_df = wage_df.append({
+            'county_code': code,
             'occupation_code': occupation_code,
             'occupation_title': occupation_title,
             'level': level,
@@ -115,14 +116,25 @@ def get_data(code):
     # except ValueError:
     #     print(f'exception occured: {ValueError}')
     print(f'COMPLETED RETRIEVAL FOR COUNTY CODE: {code}')
-    return {
-        'wage_df': wage_df,
-        'county_code': code
-    }
+    return wage_df
+    # return {
+    #     'wage_df': wage_df,
+    #     'county_code': code
+    # }
+
+def reset_county_wage_table():
+    # create cursor object so can execute queries
+    cursor = conn.cursor()
+
+    # drop table if it exists
+    cursor.execute('DROP TABLE IF EXISTS county_wage_data')
+
+    # commit changes to db
+    conn.commit()
 
 
-def save_wage_dataframe_to_database(wage_dataframe, county_code):
-    wage_dataframe.to_sql(name=f'county_{county_code}', con=conn, if_exists='replace', )
+def save_wage_dataframe_to_database(wage_dataframe):
+    wage_dataframe.to_sql(name=f'county_wage_data', con=conn, if_exists='append', )
 
 if __name__ == "__main__":
     wage_dataframe = get_data(seattle_code)
